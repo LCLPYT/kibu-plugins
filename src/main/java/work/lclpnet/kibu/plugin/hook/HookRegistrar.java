@@ -8,7 +8,5 @@ public interface HookRegistrar {
 
     <T> void unregisterHook(Hook<T> hook, T listener);
 
-    void unregisterAllHooks();
-
     void registerHooks(HookListenerModule hooks);
 }

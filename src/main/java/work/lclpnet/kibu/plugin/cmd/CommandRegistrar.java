@@ -9,6 +9,4 @@ public interface CommandRegistrar {
     LiteralCommandNode<ServerCommandSource> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command);
 
     void unregisterCommand(LiteralCommandNode<ServerCommandSource> command);
-
-    void unregisterAllCommands();
 }

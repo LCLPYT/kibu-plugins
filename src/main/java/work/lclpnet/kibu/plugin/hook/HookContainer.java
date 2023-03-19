@@ -10,6 +10,7 @@ import java.util.Map;
 
 public class HookContainer implements HookRegistrar, Unloadable {
 
+    private final Object mutex = new Object();
     private final Map<Hook<?>, List<?>> eventListeners = new HashMap<>();
 
     @Override
@@ -17,7 +18,7 @@ public class HookContainer implements HookRegistrar, Unloadable {
     public final <T> void registerHook(Hook<T> hook, T listener) {
         if (hook == null || listener == null) return;
 
-        synchronized (eventListeners) {
+        synchronized (mutex) {
             var listeners = (List<T>) eventListeners.computeIfAbsent(hook, h -> new ArrayList<T>());
             listeners.add(listener);
         }
@@ -29,17 +30,12 @@ public class HookContainer implements HookRegistrar, Unloadable {
     public final <T> void unregisterHook(Hook<T> hook, T listener) {
         if (listener == null) return;
 
-        synchronized (eventListeners) {
+        synchronized (mutex) {
             var listeners = eventListeners.get(hook);
             if (listeners == null) return;
 
             listeners.remove(listener);
         }
-    }
-
-    @Override
-    public void unregisterAllHooks() {
-        unload();
     }
 
     @Override
@@ -57,7 +53,7 @@ public class HookContainer implements HookRegistrar, Unloadable {
 
     @Override
     public void unload() {
-        synchronized (eventListeners) {
+        synchronized (mutex) {
             for (Hook<?> hook : eventListeners.keySet()) {
                 unregisterListenersOf(hook);
             }

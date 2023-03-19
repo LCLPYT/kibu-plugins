@@ -21,8 +21,14 @@
 		"minecraft": "~1.19.3",
 		"java": ">=17",
 		"fabric-api": "*",
-		"mplugins": "${mplugins_version}",
-		"kibu": "${kibu_version}"
+		"kibu": "*",
+		"mplugins": "${mplugins_version}"
 	},
-	"suggests": {}
+	"suggests": {},
+	"custom": {
+		"modmenu": {
+			"badges": ["library"],
+			"parent": "kibu"
+		}
+	}
 }
