@@ -14,6 +14,7 @@ import work.lclpnet.kibu.hook.Hook;
 import work.lclpnet.kibu.hook.HookFactory;
 import work.lclpnet.kibu.scheduler.KibuScheduling;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
@@ -76,7 +77,7 @@ public class KibuPluginTest {
         var register = new TestRegister<ServerCommandSource>();
         new KibuCommands<>(register).onInitialize();
 
-        var cmd = plugin.registerCommand(literal("test"));
+        var cmd = plugin.registerCommand(literal("test")).join();
         var registered = register.dispatcher.getRoot().getChild("test");
 
         assertNotNull(cmd);
@@ -107,8 +108,9 @@ public class KibuPluginTest {
         private final CommandDispatcher<S> dispatcher = new CommandDispatcher<>();
 
         @Override
-        public LiteralCommandNode<S> register(LiteralArgumentBuilder<S> command) {
-            return CommandDispatcherUtils.register(dispatcher, command);
+        public CompletableFuture<LiteralCommandNode<S>> register(LiteralArgumentBuilder<S> command) {
+            var cmd = CommandDispatcherUtils.register(dispatcher, command);
+            return CompletableFuture.completedFuture(cmd);
         }
 
         @Override

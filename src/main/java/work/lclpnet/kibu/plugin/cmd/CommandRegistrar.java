@@ -4,9 +4,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.server.command.ServerCommandSource;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface CommandRegistrar {
 
-    LiteralCommandNode<ServerCommandSource> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command);
+    CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command);
 
     void unregisterCommand(LiteralCommandNode<ServerCommandSource> command);
 }

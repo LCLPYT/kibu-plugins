@@ -8,6 +8,7 @@ import work.lclpnet.mplugins.ext.Unloadable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class CommandContainer implements CommandRegistrar, Unloadable {
 
@@ -15,11 +16,16 @@ public class CommandContainer implements CommandRegistrar, Unloadable {
     private final List<LiteralCommandNode<ServerCommandSource>> commands = new ArrayList<>();
 
     @Override
-    public LiteralCommandNode<ServerCommandSource> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
-        synchronized (mutex) {
-            var cmd = KibuCommands.register(command);
-            commands.add(cmd);
+    public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
+        return KibuCommands.register(command).thenApply(cmd -> {
+            registerCommand0(cmd);
             return cmd;
+        });
+    }
+
+    private void registerCommand0(LiteralCommandNode<ServerCommandSource> cmd) {
+        synchronized (mutex) {
+            commands.add(cmd);
         }
     }
 
@@ -33,7 +39,12 @@ public class CommandContainer implements CommandRegistrar, Unloadable {
 
     @Override
     public void unload() {
-        var tmp = new ArrayList<>(commands);
+        List<LiteralCommandNode<ServerCommandSource>> tmp;
+
+        synchronized (mutex) {
+            tmp = new ArrayList<>(commands);
+        }
+
         tmp.forEach(this::unregisterCommand);
     }
 }

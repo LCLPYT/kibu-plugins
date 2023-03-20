@@ -16,6 +16,8 @@ import work.lclpnet.mplugins.ext.Unloadable;
 import work.lclpnet.mplugins.util.MPluginsLoggerSupplier;
 import work.lclpnet.mplugins.util.PluginLoggerSupplier;
 
+import java.util.concurrent.CompletableFuture;
+
 public class KibuPlugin extends FabricPlugin implements PluginContext {
 
 	private final HookRegistrar hookRegistrar;
@@ -89,7 +91,7 @@ public class KibuPlugin extends FabricPlugin implements PluginContext {
 	}
 
 	@Override
-	public LiteralCommandNode<ServerCommandSource> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
+	public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
 		return commandRegistrar.registerCommand(command);
 	}
 
