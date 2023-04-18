@@ -7,13 +7,15 @@ import net.minecraft.server.command.ServerCommandSource;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import work.lclpnet.kibu.cmd.KibuCommands;
 import work.lclpnet.kibu.cmd.type.CommandRegister;
 import work.lclpnet.kibu.cmd.util.CommandDispatcherUtils;
 import work.lclpnet.kibu.hook.Hook;
 import work.lclpnet.kibu.hook.HookFactory;
 import work.lclpnet.kibu.scheduler.KibuScheduling;
+import work.lclpnet.mplugins.ext.Unloadable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -72,10 +74,10 @@ public class KibuPluginTest {
     @Test
     void testCommandUnRegistration() {
         final var plugin = new TestPlugin();
+        final var register = new TestRegister<ServerCommandSource>();
+        plugin.commandRegister = register;
+        plugin.registerUnloadable(register);
         plugin.load();
-
-        var register = new TestRegister<ServerCommandSource>();
-        new KibuCommands<>(register).onInitialize();
 
         var cmd = plugin.registerCommand(literal("test")).join();
         var registered = register.dispatcher.getRoot().getChild("test");
@@ -91,7 +93,8 @@ public class KibuPluginTest {
 
     private static class TestPlugin extends KibuPlugin {
 
-        AtomicBoolean executed;
+        TestRegister<ServerCommandSource> commandRegister;
+        AtomicBoolean executed = new AtomicBoolean(false);
 
         private TestPlugin() {
             super(x -> logger);
@@ -101,21 +104,40 @@ public class KibuPluginTest {
         protected void loadKibuPlugin() {
             registerHook(TEST_HOOK, () -> executed.set(true));
         }
+
+        @Override
+        public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
+            return commandRegister.register(command);
+        }
+
+        @Override
+        public void unregisterCommand(LiteralCommandNode<ServerCommandSource> command) {
+            commandRegister.unregister(command);
+        }
     }
 
-    private static class TestRegister<S> implements CommandRegister<S> {
+    private static class TestRegister<S> implements CommandRegister<S>, Unloadable {
 
         private final CommandDispatcher<S> dispatcher = new CommandDispatcher<>();
+        private final List<LiteralCommandNode<S>> commands = new ArrayList<>();
 
         @Override
         public CompletableFuture<LiteralCommandNode<S>> register(LiteralArgumentBuilder<S> command) {
             var cmd = CommandDispatcherUtils.register(dispatcher, command);
+            commands.add(cmd);
             return CompletableFuture.completedFuture(cmd);
         }
 
         @Override
-        public void unregister(LiteralCommandNode<S> command) {
+        public boolean unregister(LiteralCommandNode<S> command) {
             CommandDispatcherUtils.unregister(dispatcher, command);
+            commands.remove(command);
+            return true;  // assume unregistered
+        }
+
+        @Override
+        public void unload() {
+            commands.forEach(this::unregister);
         }
     }
 }
