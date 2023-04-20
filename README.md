@@ -2,9 +2,18 @@
 Bridge between [mplugins](https://github.com/LCLPYT/mplugins) and [kibu](https://github.com/LCLPYT/kibu) for FabricMC.
 
 ## About kibu-plugins
-Kibu plugins are similar to Bukkit/Spigot/Paper-plugins but for a Fabric environment.
+Kibu plugins are similar in concept to Bukkit/Spigot/Paper-plugins but for a Fabric environment.
 You can dynamically load or unload kibu-plugins, which may be useful in some situations.
 If you don't want to add any new content in your mod, such as new items, blocks etc., you may use kibu-plugins instead!
+
+---
+
+**Please note**: Kibu plugins are **NOT COMPATIBLE** with Bukkit/Spigot/Paper and will not attempt to be.
+Kibu plugins are an alternative to those plugin loaders.
+The project started, because existing plugin loaders do not support modding.
+An alternative to kibu plugins is the Sponge project, which has seen some development recently but does not seem to run stable on modern versions yet.
+
+---
 
 Since kibu-plugins can be loaded and unloaded at any time, it is not possible to register new content as that can only be done during startup. 
 In such cases, mods should be used instead.
