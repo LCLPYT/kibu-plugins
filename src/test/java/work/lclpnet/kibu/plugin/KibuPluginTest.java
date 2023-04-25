@@ -91,6 +91,12 @@ public class KibuPluginTest {
         assertNull(registered);
     }
 
+    @Test
+    void testEnvironment() {
+        final var pluginContext = (PluginContext) new TestPlugin();
+        assertNotNull(pluginContext.getEnvironment());
+    }
+
     private static class TestPlugin extends KibuPlugin {
 
         TestRegister<ServerCommandSource> commandRegister;
