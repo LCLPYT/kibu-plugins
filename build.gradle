@@ -9,8 +9,10 @@ Properties props = loadProperties.call('publish.properties') as Properties
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
+boolean local = System.getProperty("build.local") == "true"
+
 archivesBaseName = project.archives_base_name
-version = gitVersion.call()
+version = gitVersion.call() + (local ? '+local' : '')
 group = project.maven_group
 
 repositories {
