@@ -22,7 +22,7 @@
 		"java": ">=17",
 		"fabric-api": "*",
 		"kibu": "*",
-		"mplugins": "${mplugins_version}"
+		"mplugins": ">=${mplugins_version}"
 	},
 	"suggests": {},
 	"custom": {
