@@ -11,6 +11,8 @@ import work.lclpnet.kibu.cmd.type.CommandRegister;
 import work.lclpnet.kibu.cmd.util.CommandDispatcherUtils;
 import work.lclpnet.kibu.hook.Hook;
 import work.lclpnet.kibu.hook.HookFactory;
+import work.lclpnet.kibu.plugin.ext.KibuPlugin;
+import work.lclpnet.kibu.plugin.ext.PluginContext;
 import work.lclpnet.kibu.scheduler.KibuScheduling;
 import work.lclpnet.mplugins.ext.Unloadable;
 

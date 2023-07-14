@@ -1,4 +1,4 @@
-package work.lclpnet.kibu.plugin;
+package work.lclpnet.kibu.plugin.ext;
 
 import org.slf4j.Logger;
 import work.lclpnet.kibu.plugin.cmd.CommandRegistrar;

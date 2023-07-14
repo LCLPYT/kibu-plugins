@@ -1,4 +1,4 @@
-package work.lclpnet.kibu.plugin;
+package work.lclpnet.kibu.plugin.ext;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
