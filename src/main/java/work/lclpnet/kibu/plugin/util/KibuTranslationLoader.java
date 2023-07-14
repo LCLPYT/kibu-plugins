@@ -45,4 +45,8 @@ public class KibuTranslationLoader extends MultiSourceTranslationLoader {
     public boolean isDirty() {
         return dirty;
     }
+
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+    }
 }

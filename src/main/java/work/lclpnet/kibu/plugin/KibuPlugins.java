@@ -83,6 +83,9 @@ public class KibuPlugins implements ModInitializer {
     }
 
     private void reloadTranslations() {
-        translator.reload().thenRun(() -> TranslationsLoadedCallback.HOOK.invoker().onLoaded(translationService));
+        translator.reload().thenRun(() -> {
+            translationLoader.setDirty(false);
+            TranslationsLoadedCallback.HOOK.invoker().onLoaded(translationService);
+        });
     }
 }
