@@ -15,7 +15,7 @@
 	"icon": "assets/kibu-plugins/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["work.lclpnet.kibu.plugin.KibuPlugins"]
+		"mplugins": ["work.lclpnet.kibu.plugin.KibuPlugins"]
 	},
 	"mixins": [],
 	"depends": {

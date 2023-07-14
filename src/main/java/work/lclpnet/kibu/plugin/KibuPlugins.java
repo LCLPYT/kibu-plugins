@@ -1,6 +1,5 @@
 package work.lclpnet.kibu.plugin;
 
-import net.fabricmc.api.ModInitializer;
 import work.lclpnet.kibu.plugin.ext.TranslatedPlugin;
 import work.lclpnet.kibu.plugin.hook.TranslationsLoadedCallback;
 import work.lclpnet.kibu.plugin.util.KibuLanguagePreferenceProvider;
@@ -9,16 +8,19 @@ import work.lclpnet.kibu.translate.TranslationService;
 import work.lclpnet.kibu.translate.pref.LanguagePreferenceProvider;
 import work.lclpnet.mplugins.event.PluginBootstrapEvents;
 import work.lclpnet.mplugins.event.PluginLifecycleEvents;
+import work.lclpnet.mplugins.ext.MPluginsInit;
 import work.lclpnet.plugin.Plugin;
 import work.lclpnet.translations.DefaultLanguageTranslator;
 
-public class KibuPlugins implements ModInitializer {
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class KibuPlugins implements MPluginsInit {
 
     private final KibuTranslationLoader translationLoader;
     private final KibuLanguagePreferenceProvider languagePreferenceProvider;
     private final DefaultLanguageTranslator translator;
     private final TranslationService translationService;
-    private boolean bootstrap = false;
+    private final AtomicBoolean bootstrap = new AtomicBoolean();
 
     public KibuPlugins() {
         translationLoader = new KibuTranslationLoader();
@@ -28,7 +30,7 @@ public class KibuPlugins implements ModInitializer {
     }
 
     @Override
-    public void onInitialize() {
+    public void beforeBootstrap() {
         PluginLifecycleEvents.LOADING.register(loadedPlugin -> {
             Plugin plugin = loadedPlugin.getPlugin();
 
@@ -53,10 +55,10 @@ public class KibuPlugins implements ModInitializer {
             }
         });
 
-        PluginBootstrapEvents.BEGIN.register(pluginFrame -> bootstrap = true);
+        PluginBootstrapEvents.BEGIN.register(pluginFrame -> bootstrap.set(true));
 
         PluginBootstrapEvents.COMPLETE.register(pluginFrame -> {
-            bootstrap = false;
+            bootstrap.set(false);
 
             if (translationLoader.isDirty()) {
                 reloadTranslations();
@@ -67,7 +69,7 @@ public class KibuPlugins implements ModInitializer {
     private void unregisterTranslatedPlugin(TranslatedPlugin translatedPlugin) {
         translationLoader.unregister(translatedPlugin);
 
-        if (!bootstrap) {
+        if (!bootstrap.get()) {
             reloadTranslations();
         }
     }
@@ -77,7 +79,7 @@ public class KibuPlugins implements ModInitializer {
 
         translatedPlugin.injectTranslationService(translationService);
 
-        if (!bootstrap) {
+        if (!bootstrap.get()) {
             reloadTranslations();
         }
     }
