@@ -14,7 +14,9 @@
 	"license": "MIT",
 	"icon": "assets/kibu-plugins/icon.png",
 	"environment": "*",
-	"entrypoints": {},
+	"entrypoints": {
+		"main": ["work.lclpnet.kibu.plugin.KibuPlugins"]
+	},
 	"mixins": [],
 	"depends": {
 		"fabricloader": ">=0.14.21",
