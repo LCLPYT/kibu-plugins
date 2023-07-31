@@ -3,11 +3,18 @@ package work.lclpnet.kibu.plugin;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import work.lclpnet.kibu.cmd.type.CommandFactory;
 import work.lclpnet.kibu.cmd.type.CommandRegister;
+import work.lclpnet.kibu.cmd.type.CommandRegistrationContext;
 import work.lclpnet.kibu.cmd.util.CommandDispatcherUtils;
 import work.lclpnet.kibu.hook.Hook;
 import work.lclpnet.kibu.hook.HookFactory;
@@ -94,6 +101,26 @@ public class KibuPluginTest {
     }
 
     @Test
+    void testCommandFactoryUnRegistration() {
+        final var plugin = new TestPlugin();
+        final var register = new TestRegister<ServerCommandSource>();
+        plugin.commandRegister = register;
+        plugin.registerUnloadable(register);
+        plugin.load();
+
+        var cmd = plugin.registerCommand(context -> literal("test")).join();
+        var registered = register.dispatcher.getRoot().getChild("test");
+
+        assertNotNull(cmd);
+        assertEquals(registered, cmd);
+
+        plugin.unload();
+
+        registered = register.dispatcher.getRoot().getChild("test");
+        assertNull(registered);
+    }
+
+    @Test
     void testEnvironment() {
         final var pluginContext = (PluginContext) new TestPlugin();
         assertNotNull(pluginContext.getEnvironment());
@@ -119,12 +146,17 @@ public class KibuPluginTest {
         }
 
         @Override
+        public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(CommandFactory<ServerCommandSource> factory) {
+            return commandRegister.register(factory);
+        }
+
+        @Override
         public void unregisterCommand(LiteralCommandNode<ServerCommandSource> command) {
             commandRegister.unregister(command);
         }
     }
 
-    private static class TestRegister<S> implements CommandRegister<S>, Unloadable {
+    private static class TestRegister<S> implements CommandRegister<S>, Unloadable, CommandRegistrationContext, CommandRegistryAccess {
 
         private final CommandDispatcher<S> dispatcher = new CommandDispatcher<>();
         private final List<LiteralCommandNode<S>> commands = new ArrayList<>();
@@ -137,6 +169,12 @@ public class KibuPluginTest {
         }
 
         @Override
+        public CompletableFuture<LiteralCommandNode<S>> register(CommandFactory<S> factory) {
+            var command = factory.create(this);
+            return register(command);
+        }
+
+        @Override
         public boolean unregister(LiteralCommandNode<S> command) {
             CommandDispatcherUtils.unregister(dispatcher, command);
             commands.remove(command);
@@ -145,7 +183,22 @@ public class KibuPluginTest {
 
         @Override
         public void unload() {
-            commands.forEach(this::unregister);
+            new ArrayList<>(commands).forEach(this::unregister);
+        }
+
+        @Override
+        public CommandRegistryAccess registryAccess() {
+            return this;
+        }
+
+        @Override
+        public CommandManager.RegistrationEnvironment environment() {
+            return CommandManager.RegistrationEnvironment.DEDICATED;
+        }
+
+        @Override
+        public <T> RegistryWrapper<T> createWrapper(RegistryKey<? extends Registry<T>> registryRef) {
+            return null;
         }
     }
 }

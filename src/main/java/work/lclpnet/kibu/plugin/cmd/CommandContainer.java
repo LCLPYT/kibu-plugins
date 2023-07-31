@@ -4,6 +4,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.server.command.ServerCommandSource;
 import work.lclpnet.kibu.cmd.KibuCommands;
+import work.lclpnet.kibu.cmd.type.CommandFactory;
 import work.lclpnet.mplugins.ext.Unloadable;
 
 import java.util.ArrayList;
@@ -17,16 +18,20 @@ public class CommandContainer implements CommandRegistrar, Unloadable {
 
     @Override
     public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
-        return KibuCommands.register(command).thenApply(cmd -> {
-            registerCommand0(cmd);
-            return cmd;
-        });
+        return KibuCommands.register(command).thenApply(this::registerCommand0);
     }
 
-    private void registerCommand0(LiteralCommandNode<ServerCommandSource> cmd) {
+    @Override
+    public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(CommandFactory<ServerCommandSource> factory) {
+        return KibuCommands.register(factory).thenApply(this::registerCommand0);
+    }
+
+    private LiteralCommandNode<ServerCommandSource> registerCommand0(LiteralCommandNode<ServerCommandSource> cmd) {
         synchronized (mutex) {
             commands.add(cmd);
         }
+
+        return cmd;
     }
 
     @Override
