@@ -4,6 +4,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.server.command.ServerCommandSource;
 import work.lclpnet.kibu.cmd.type.CommandFactory;
+import work.lclpnet.kibu.cmd.type.CommandReference;
 import work.lclpnet.kibu.hook.Hook;
 import work.lclpnet.kibu.plugin.cmd.CommandContainer;
 import work.lclpnet.kibu.plugin.cmd.CommandRegistrar;
@@ -16,8 +17,6 @@ import work.lclpnet.mplugins.ext.FabricPlugin;
 import work.lclpnet.mplugins.ext.Unloadable;
 import work.lclpnet.mplugins.util.MPluginsLoggerSupplier;
 import work.lclpnet.mplugins.util.PluginLoggerSupplier;
-
-import java.util.concurrent.CompletableFuture;
 
 public class KibuPlugin extends FabricPlugin implements PluginContext {
 
@@ -92,12 +91,12 @@ public class KibuPlugin extends FabricPlugin implements PluginContext {
 	}
 
 	@Override
-	public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
+	public CommandReference<ServerCommandSource> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
 		return commandRegistrar.registerCommand(command);
 	}
 
 	@Override
-	public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(CommandFactory<ServerCommandSource> factory) {
+	public CommandReference<ServerCommandSource> registerCommand(CommandFactory<ServerCommandSource> factory) {
 		return commandRegistrar.registerCommand(factory);
 	}
 

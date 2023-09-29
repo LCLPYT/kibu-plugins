@@ -5,28 +5,29 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.server.command.ServerCommandSource;
 import work.lclpnet.kibu.cmd.KibuCommands;
 import work.lclpnet.kibu.cmd.type.CommandFactory;
+import work.lclpnet.kibu.cmd.type.CommandReference;
 import work.lclpnet.mplugins.ext.Unloadable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 
 public class CommandContainer implements CommandRegistrar, Unloadable {
 
     private final Object mutex = new Object();
-    private final List<LiteralCommandNode<ServerCommandSource>> commands = new ArrayList<>();
+    private final List<CommandReference<ServerCommandSource>> commands = new ArrayList<>();
 
     @Override
-    public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
-        return KibuCommands.register(command).thenApply(this::registerCommand0);
+    public CommandReference<ServerCommandSource> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
+        return store(KibuCommands.register(command));
     }
 
     @Override
-    public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(CommandFactory<ServerCommandSource> factory) {
-        return KibuCommands.register(factory).thenApply(this::registerCommand0);
+    public CommandReference<ServerCommandSource> registerCommand(CommandFactory<ServerCommandSource> factory) {
+        return store(KibuCommands.register(factory));
     }
 
-    private LiteralCommandNode<ServerCommandSource> registerCommand0(LiteralCommandNode<ServerCommandSource> cmd) {
+    private CommandReference<ServerCommandSource> store(CommandReference<ServerCommandSource> cmd) {
         synchronized (mutex) {
             commands.add(cmd);
         }
@@ -34,22 +35,33 @@ public class CommandContainer implements CommandRegistrar, Unloadable {
         return cmd;
     }
 
+    public Optional<CommandReference<ServerCommandSource>> getReferenceTo(LiteralCommandNode<ServerCommandSource> command) {
+        synchronized (mutex) {
+            return commands.stream().filter(ref -> {
+                var cmd = ref.getCommand();
+                return cmd.isPresent() && cmd.get().equals(command);
+            }).findAny();
+        }
+    }
+
     @Override
     public void unregisterCommand(LiteralCommandNode<ServerCommandSource> command) {
+        var optRef = getReferenceTo(command);
+        if (optRef.isEmpty()) return;
+
+        var ref = optRef.get();
+
         synchronized (mutex) {
-            KibuCommands.unregister(command);
-            commands.remove(command);
+            ref.unregister();
+            commands.remove(ref);
         }
     }
 
     @Override
     public void unload() {
-        List<LiteralCommandNode<ServerCommandSource>> tmp;
-
         synchronized (mutex) {
-            tmp = new ArrayList<>(commands);
+            commands.forEach(CommandReference::unregister);
+            commands.clear();
         }
-
-        tmp.forEach(this::unregisterCommand);
     }
 }

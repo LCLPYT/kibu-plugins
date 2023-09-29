@@ -12,9 +12,8 @@ import net.minecraft.server.command.ServerCommandSource;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import work.lclpnet.kibu.cmd.type.CommandFactory;
-import work.lclpnet.kibu.cmd.type.CommandRegister;
-import work.lclpnet.kibu.cmd.type.CommandRegistrationContext;
+import work.lclpnet.kibu.cmd.type.*;
+import work.lclpnet.kibu.cmd.type.impl.DynamicCommandReference;
 import work.lclpnet.kibu.cmd.util.CommandDispatcherUtils;
 import work.lclpnet.kibu.hook.Hook;
 import work.lclpnet.kibu.hook.HookFactory;
@@ -25,7 +24,6 @@ import work.lclpnet.mplugins.ext.Unloadable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
@@ -88,7 +86,7 @@ public class KibuPluginTest {
         plugin.registerUnloadable(register);
         plugin.load();
 
-        var cmd = plugin.registerCommand(literal("test")).join();
+        var cmd = plugin.registerCommand(literal("test")).getCommand().orElseThrow();
         var registered = register.dispatcher.getRoot().getChild("test");
 
         assertNotNull(cmd);
@@ -108,7 +106,7 @@ public class KibuPluginTest {
         plugin.registerUnloadable(register);
         plugin.load();
 
-        var cmd = plugin.registerCommand(context -> literal("test")).join();
+        var cmd = plugin.registerCommand(context -> literal("test")).getCommand().orElseThrow();
         var registered = register.dispatcher.getRoot().getChild("test");
 
         assertNotNull(cmd);
@@ -141,13 +139,17 @@ public class KibuPluginTest {
         }
 
         @Override
-        public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
-            return commandRegister.register(command);
+        public CommandReference<ServerCommandSource> registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
+            var ref = new DynamicCommandReference<>(this::unregisterCommand);
+            commandRegister.register(command, ref);
+            return ref;
         }
 
         @Override
-        public CompletableFuture<LiteralCommandNode<ServerCommandSource>> registerCommand(CommandFactory<ServerCommandSource> factory) {
-            return commandRegister.register(factory);
+        public CommandReference<ServerCommandSource> registerCommand(CommandFactory<ServerCommandSource> factory) {
+            var ref = new DynamicCommandReference<>(this::unregisterCommand);
+            commandRegister.register(factory, ref);
+            return ref;
         }
 
         @Override
@@ -162,16 +164,17 @@ public class KibuPluginTest {
         private final List<LiteralCommandNode<S>> commands = new ArrayList<>();
 
         @Override
-        public CompletableFuture<LiteralCommandNode<S>> register(LiteralArgumentBuilder<S> command) {
+        public boolean register(LiteralArgumentBuilder<S> command, CommandConsumer<S> consumer) {
             var cmd = CommandDispatcherUtils.register(dispatcher, command);
             commands.add(cmd);
-            return CompletableFuture.completedFuture(cmd);
+            consumer.acceptCommand(cmd);
+            return true;
         }
 
         @Override
-        public CompletableFuture<LiteralCommandNode<S>> register(CommandFactory<S> factory) {
+        public boolean register(CommandFactory<S> factory, CommandConsumer<S> consumer) {
             var command = factory.create(this);
-            return register(command);
+            return register(command, consumer);
         }
 
         @Override
