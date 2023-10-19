@@ -30,6 +30,8 @@ public class HookContainer implements HookRegistrar, Unloadable {
     public final <T> void unregisterHook(Hook<T> hook, T listener) {
         if (listener == null) return;
 
+        hook.unregister(listener);
+
         synchronized (mutex) {
             var listeners = eventListeners.get(hook);
             if (listeners == null) return;
