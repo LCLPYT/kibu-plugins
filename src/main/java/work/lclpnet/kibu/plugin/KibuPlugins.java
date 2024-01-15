@@ -8,6 +8,7 @@ import work.lclpnet.kibu.translate.TranslationService;
 import work.lclpnet.kibu.translate.pref.LanguagePreferenceProvider;
 import work.lclpnet.mplugins.event.PluginBootstrapEvents;
 import work.lclpnet.mplugins.event.PluginLifecycleEvents;
+import work.lclpnet.mplugins.event.PluginShutdownEvents;
 import work.lclpnet.mplugins.ext.MPluginsInit;
 import work.lclpnet.plugin.Plugin;
 import work.lclpnet.translations.DefaultLanguageTranslator;
@@ -20,7 +21,8 @@ public class KibuPlugins implements MPluginsInit {
     private final KibuLanguagePreferenceProvider languagePreferenceProvider;
     private final DefaultLanguageTranslator translator;
     private final TranslationService translationService;
-    private final AtomicBoolean bootstrap = new AtomicBoolean();
+    private final AtomicBoolean bootstrap = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     public KibuPlugins() {
         translationLoader = new KibuTranslationLoader();
@@ -64,12 +66,16 @@ public class KibuPlugins implements MPluginsInit {
                 reloadTranslations();
             }
         });
+
+        PluginShutdownEvents.BEGIN.register(pluginManager -> shutdown.set(true));
+
+        PluginShutdownEvents.COMPLETE.register(pluginManager -> shutdown.set(false));
     }
 
     private void unregisterTranslatedPlugin(TranslatedPlugin translatedPlugin) {
         translationLoader.unregister(translatedPlugin);
 
-        if (!bootstrap.get()) {
+        if (!bootstrap.get() && !shutdown.get()) {
             reloadTranslations();
         }
     }
